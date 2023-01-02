@@ -25,30 +25,56 @@ const signup=async (req, res)=>{
         })
     } 
 }
-const login=async (req, res)=>{
+const login=async (req,res)=>{
     try{
         const {email, password}=req.body
 
-        let existsinguser=userModel.findOne({email})
-        if(!existsinguser){
-            return res.status(400).send("user not exists...!")
+        let existUser=await userModel.findOne({email})
+        if(!existUser){
+            return res.status(400).send("Your Not Found")
         }
-        if(password===existsinguser.password){
-            return res.status(400).send("You entered worng password...!")
+        if(password!==existUser.password){
+            return res.status(400).send("Invalid credentials")
         }
+        //jwt.sign(payload, key, {expiresIn:3600000000}, response)
         let payload={
-            user:{id:existsinguser._id}
+            user:{id:existUser._id}
         }
-        jwt.sign(payload, 'PAVAN-login', {expiresIn:10000000}, (res, token)=>{
-        if(err) return err
-        return res.send(token)})
+        jwt.sign(payload, "PAVAN_JWT_KEY2", {expiresIn:"2d"},(err, token)=>{
+            if(err) return err
+            return res.json({token})
+        })
     }
     catch(err){
         res.send(500).json({
-            message:err
+            message:err.message
         })
-    } 
+    }
 }
+    // try{
+    //     const {email, password}=req.body
+
+    //     let existsinguser=await userModel.findOne({email})
+    //     if(!existsinguser){
+    //         return res.status(400).send("user not exists...!")
+    //     }
+    //     if(password!==existsinguser.password){
+    //         return res.status(400).send("You entered worng password...!")
+    //     }
+    //     let payload={
+    //         user:{id:existsinguser._id}
+    //     }
+    //     jwt.sign(payload, 'PAVAN-login', {expiresIn:"2d"}, (res, token)=>{
+    //         if(err) return err
+    //         return res.json({token})
+    //     })
+    // }
+    // catch(err){
+    //     res.send(500).json({
+    //         message:err
+    //     })
+    // } 
+
 
 const protecter=(req, res, next)=>{
     try{
@@ -56,7 +82,7 @@ const protecter=(req, res, next)=>{
         if(!token){
             return res.status(400).send('Your not Autharized')
         }
-        let decode=jwt.verify(token, "PAVAN-login")
+        let decode=jwt.verify(token, "PAVAN_JWT_KEY2")
         req.user=decode.user
         next()
     }
